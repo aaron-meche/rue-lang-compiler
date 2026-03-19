@@ -24,66 +24,72 @@ function writeFileText(filePath, fileContent) {
 }
 
 class NSS {
+    path = null     // local path reference to input .nss file
+    txt = null      // raw text string of read input file
+    txtLine = null  // array of raw text split by line
+    layers = []     // tracks active css layers throughout exec
+    map = {}        // holds all css layer ref / style data
+    css = []        // array of css lines to output
+
+    // Read from filepath, parse and compile
     constructor(filepath) {
+        if (!filepath) return
         this.path = filepath
         this.txt = readFileText(this.path)
         this.txtLine = this.txt.split("\n")
-        this.level = 0
-        this.layers = []
-        this.map = {}
-        this.css = []
+        this.parse()
+        this.compile()
     }
 
-    compile() {
+    // If filepath was not provided initially
+    run(filepath) {
+        constructor(filepath)
+    }
+
+    // Iterate and process all lines
+    parse() {
         for (let i = 0; i < this.txtLine.length; i++) {
             this.processLine(this.txtLine[i].trim())
         }
-        console.log(this.map.length)
+    }
+
+    // Build CSS file from map
+    compile() {
         for (let i = 0; i < Object.keys(this.map).length; i++) {
             this.css.push(Object.keys(this.map)[i] + "{")
             this.css.push(Object.values(this.map)[i].join("\n"))
             this.css.push("}")
         }
-        console.log(this.css)
     }
 
+    // Interpret each line, building map
     processLine(line) {
         let lastChar = line.split("")[line.length - 1]
-        let mapID = this.layers.join(" ")
-        // New Layer
+        let mapID = () => { return this.layers.join(" ")?.replaceAll(" :", ":") }
+        // Open a Layer ... [ident] {
         if (lastChar == "{") {
             this.layers.push(line.replace("{", ""))
-            this.map[this.layers.join(" ")] = []
+            this.map[mapID()] = []
         }
-        // Close Layer
+        // Close Layer ... }
         else if (lastChar == "}") {
             this.layers.pop()
         }
-        // Interior Line
+        // Interior Line ... [attr]: [val]
         else if (line.includes(":")) {
-            // if (!this.map[mapID]) this.map[mapID] = []
-            this.map[mapID].push(line)
-            // console.log(this.map)
-            // this.map[this.layers.join(" ")].push(line)
+            this.map[mapID()].push(line)
         }
-        // console.log(this.map)
     }
 
-    print() {
-        console.log(this.css.join("\n"))
-    }
 
-    output(path) {
-        writeFileText(path, this.css.join("\n"))
-    }
+    print() { console.log(this.css.join("\n")) }
+    output(path) { writeFileText(path, this.css.join("\n")) }
 }
 
 //
 // Program
 function main() {
-    let instance = new NSS("./syntax.nss")
-    instance.compile()
-    instance.print()
+    let instance = new NSS("./syntax.nss", "./output.css")
     instance.output("./output.css")
 }
 

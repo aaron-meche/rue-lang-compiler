@@ -1,10 +1,16 @@
-.logo{
-padding: 0.4rem 0.8rem;
+body{
+background: black;
+color: white;
 }
-.logo i{
-margin-right: 0.4rem;
+.square{
+height: 4rem;
+width: 4rem;
+position: fixed;
+bottom: 1rem;
+left: 1rem;
+background: red;
 }
-.logo :hover{
-background: var(--l1);
-outline: solid 1pt var(--l3);
+.square:hover{
+height: 8rem;
+width: 8rem;
 }

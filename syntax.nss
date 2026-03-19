@@ -1,14 +1,20 @@
 
 
-.logo{
-    i{
-        margin-right: 0.4rem;
-    }
+body{
+    background: black;
+    color: white;
+}
 
-    padding: 0.4rem 0.8rem;
+.square{
+    height: 4rem;
+    width: 4rem;
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    background: red;
 
     :hover{
-        background: var(--l1);
-        outline: solid 1pt var(--l3);
+        height: 8rem;
+        width: 8rem;
     }
 }
