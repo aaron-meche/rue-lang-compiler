@@ -29,12 +29,19 @@ function writeFileText(filePath, fileContent) {
 }
 
 export class RueFile {
-    path = null     // local path reference to input .nss file
-    txt = null      // raw text string of read input file
-    txtLine = null  // array of raw text split by line
-    layers = []     // tracks active css layers throughout exec
-    map = {}        // holds all css layer ref / style data
-    css = []        // array of css lines to output
+    path = null
+    txt = null
+    txtLine = null
+    layers = []
+    map = { ":root": [] }
+    func = {}
+    css = []
+
+    inFunc = false
+    funcName = null
+    funcParams = []
+    funcBody = []
+    funcDepth = 0
 
     // Read from filepath, parse and compile
     constructor(filepath) {
@@ -45,9 +52,6 @@ export class RueFile {
         this.parse()
         this.compile()
     }
-
-    // If filepath was not provided initially
-    run(filepath) { constructor(filepath) }
 
     // Force feed text instead of filepath
     feed(text) {
@@ -73,33 +77,101 @@ export class RueFile {
         }
     }
 
+    // Call Function from saved func map
+    callFunction(name, args) {
+        if (!this.func[name]) this.css.push("/* Error! Function " + name + " undefined */")
+        const result = this.func[name](...args)
+        return String(result)
+    }
+
+    // Resolve variable / function calls
+    resolveValue(val) {
+        if (val.split(" ")[0] == "def") {
+            val = val.replace("def ", "--")
+        }
+        if (val.includes("(") && val.includes(")")) {
+            
+        }
+        return val
+    }
+
     // Interpret each line, building map
     processLine(line) {
         let lastChar = line.split("")[line.length - 1]
         let firstWord = line.split(" ")[0]
         let mapID = () => { return this.layers.join(" ")?.replaceAll(" :", ":") }
-        // Function Declaration
-        if (firstWord == "func") {
-            this.css.push("/* function decl */")
+        
+        // Function Capture Mode
+        if (this.inFunc) {
+            // Nested function
+            if (lastChar == "{") {
+                this.funcDepth++
+                this.funcBody.push(line)
+            }
+            // Close function
+            else if (lastChar == "}") {
+                // If closing nested function
+                if (this.funcDepth > 0) {
+                    this.funcDepth--
+                    this.funcBody.push(line)
+                }
+                // If closing main function
+                else {
+                    const body = this.funcBody.join("\n")
+                    const params = this.funcParams
+                    const name = this.funcName
+                    try {
+                        this.func[name] = new Function(...params, body)
+                    }
+                    catch (error) {
+                        this.css.push("/* Error creating function: " + name + " */")
+                        throw new Error(error)
+                    }
+                    this.inFunc = false
+                    this.funcName = null
+                    this.funcParams = []
+                    this.funcBody = []
+                    this.funcDepth = 0
+                }
+            }
+            // Add new line to function
+            else {
+                this.funcBody.push(line)
+            }
         }
-        // Open a Layer ... [ident] {
-        else if (lastChar == "{") {
-            this.layers.push(line.replace("{", ""))
-            this.map[mapID()] = []
+        // Style Capture Mode
+        else {
+            // Function Declaration
+            if (firstWord == "func") {
+                this.inFunc = true
+                this.funcName = line.replace("func ", "").split("(")[0]
+                this.funcParams = [line.split("(")[1].split(")")[0]]
+            }
+            // Open a Layer ... [ident] {
+            else if (lastChar == "{") {
+                this.layers.push(line.replace("{", ""))
+                this.map[mapID()] = []
+            }
+            // Close Layer ... }
+            else if (lastChar == "}") {
+                this.layers.pop()
+            }
+            // Define Variable
+            else if (firstWord == "def") {
+                this.map[":root"].push(this.resolveValue(line))
+            }
+            // Interior Line ... [attr]: [val]
+            else if (line.includes(":")) {
+                let split = line.split(": ")
+                let key = split[0]
+                let val = split[1]
+                if (val.includes("_")) {
+                    val = val.replaceAll()
+                }
+                this.map[mapID()].push(this.resolveValue(line))
+            }
         }
-        // Close Layer ... }
-        else if (lastChar == "}") {
-            this.layers.pop()
-        }
-        // Define Variable
-        else if (firstWord == "def") {
-            if (!this.map[":root"]) this.map[":root"] = [] 
-            this.map[":root"].push(line.replace("def ", "--"))
-        }
-        // Interior Line ... [attr]: [val]
-        else if (line.includes(":")) {
-            this.map[mapID()].push(line)
-        }
+        
     }
 
     print() { console.log(this.css.join("\n")) }

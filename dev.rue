@@ -1,28 +1,34 @@
 
 body{
     margin: 0;
-    background: black;
+    background: var(--l0);
     color: white;
 }
 
-func getLayer() {}
+func getLayer(layer) {
+    let base = 20
+    let diff = 8
+    let r = 20 + layer * diff
+    let g = 20 + layer * diff
+    let b = 20 + layer * diff
+    return `rgb(${r}, ${g}, ${b})`
+}
 
-def bg: rgb(20, 20, 20);
-def l0: rgb(28, 28, 28);
-def l1: rgb(36, 36, 36);
-def l2: rgb(44, 44, 44);
-def l3: rgb(52, 52, 52);
+def l0: getLayer(0)
+def l1: getLayer(1)
+def l2: getLayer(2)
+def l3: getLayer(3)
 
 .module{
     padding: 1.6rem;
     margin: 1.6rem;
-    background: rgb(20,20,20);
+    background: var(--l1);
     text-align: center;
     border-radius: 0.4rem;
     cursor: pointer;
 
     :hover{
-        background: rgb(40,40,40);
+        background: var(--l2);
     }
 
     .title{
