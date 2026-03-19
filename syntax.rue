@@ -1,5 +1,7 @@
 
 
+def bg: yellow;
+
 body{
     background: black;
     color: white;
@@ -11,7 +13,7 @@ body{
     position: fixed;
     bottom: 1rem;
     left: 1rem;
-    background: red;
+    background: rgb(0, 0, 0);
 
     :hover{
         height: 8rem;
