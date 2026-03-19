@@ -4,12 +4,12 @@
 //
 // by Aaron Meche
 //
-import { RueFile } from './rue-compiler.js'
+import { RueFile } from './compiler.js'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-export function preprocessRue() {
+export default function runRue() {
     return {
         style({ content, attributes }) {
             if (attributes.lang !== 'rue') return

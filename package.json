@@ -1,0 +1,28 @@
+{
+	"name": "rue-lang",
+	"version": "1.0.25",
+	"description": "Rue Stylesheet Language, css with nested styles and advanced variables",
+	"keywords": [
+		"rue",
+		"css",
+		"nested",
+		"style",
+		"stylesheet",
+		"web"
+	],
+	"homepage": "https://github.com/aaron-meche/rue-lang-compiler#readme",
+	"bugs": {
+		"url": "https://github.com/aaron-meche/rue-lang-compiler/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aaron-meche/rue-lang-compiler.git"
+	},
+	"license": "MIT",
+	"author": "aaronmeche",
+	"type": "module",
+	"main": "src/index.js",
+	"scripts": {
+		"test": "compile"
+	}
+}
