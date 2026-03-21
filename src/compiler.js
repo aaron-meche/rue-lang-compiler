@@ -11,7 +11,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __sysDir = path.dirname(__filename);
 
-
 // Read File Text Content
 function readFileText(filePath) { 
     try {
@@ -29,7 +28,6 @@ function writeFileText(filePath, fileContent) {
 }
 
 export class RueFile {
-    path = null
     txt = null
     txtLine = null
     layers = []
@@ -44,60 +42,59 @@ export class RueFile {
     funcDepth = 0
 
     // Read from filepath, parse and compile
-    constructor(filepath) {
+    constructor(filepath, doNotCompile = false) {
         if (!filepath) return
-        this.path = filepath
-        this.txt = readFileText(this.path)
-        this.txtLine = this.txt.split("\n")
-        this.parse()
-        this.compile()
+        this.feed(readFileText(filepath), doNotCompile)
     }
 
     // Force feed text instead of filepath
-    feed(text) {
+    feed(text, doNotCompile) {
         this.txt = text
-        this.txtLine = this.txt.split("\n")
-        this.parse()
-        this.compile()
+
+        if (doNotCompile) return
+        this.run()
+    }
+
+    // Parse and Compile stored text
+    run() {
+        this.#parse()
+        this.#compile()
     }
 
     // Iterate and process all lines
-    parse() {
-        for (let i = 0; i < this.txtLine.length; i++) {
-            this.processLine(this.txtLine[i].trim())
+    #parse() {
+        let lineSplitText = this.txt?.split("\n")
+        for (let i = 0; i < lineSplitText.length; i++) {
+            this.#processLine(lineSplitText[i].trim())
         }
     }
 
     // Build CSS file from map
-    compile() {
+    #compile() {
         for (let i = 0; i < Object.keys(this.map).length; i++) {
             this.css.push(Object.keys(this.map)[i] + "{")
-            this.css.push(Object.values(this.map)[i].join("\n"))
+            this.css.push("\t" + Object.values(this.map)[i].join("\n\t"))
             this.css.push("}")
         }
     }
 
     // Call Function from saved func map
-    callFunction(name, args) {
+    #callFunction(name, args) {
         if (!this.func[name]) this.css.push("/* Error! Function " + name + " undefined */")
         const result = this.func[name](...args)
         return String(result)
     }
 
     // Resolve variable / function calls
-    resolveValue(val) {
+    #resolveValue(val) {
         if (val.split(" ")[0] == "def") {
             val = val?.replace("def ", "--")
-        }
-        if (val.includes("{") && val.includes("}")) {
-            let evalStr = val.slice(val.indexOf('{') + 1, val.lastIndexOf('}')).trim()
-            console.log(eval(evalStr))
         }
         return val
     }
 
     // Interpret each line, building map
-    processLine(line) {
+    #processLine(line) {
         let lastChar = line.split("")[line.length - 1]
         let firstWord = line.split(" ")[0]
         let mapID = () => { return this.layers.join(" ")?.replaceAll(" :", ":") }
@@ -142,40 +139,26 @@ export class RueFile {
         }
         // Style Capture Mode
         else {
-            // Handle Comments
             if (firstWord == "//") return
-            // Function Declaration ... func funcName(param) {
             if (firstWord == "func") {
                 this.inFunc = true
                 this.funcName = line.replace("func ", "").split("(")[0]
                 this.funcParams = [line.split("(")[1].split(")")[0]]
-            }
-            // Open a Layer ... div {
+            } // New Layer
             else if (lastChar == "{") {
                 this.layers.push(line.replace("{", ""))
                 this.map[mapID()] = []
-            }
-            // Close Layer ... }
+            } // Close Layer
             else if (line == "}") {
                 this.layers.pop()
-            }
-            // Define Variable ... def Var: Val
+            } // Variable Definition
             else if (firstWord == "def") {
-                this.map[":root"].push(this.resolveValue(line))
-            }
-            // Interior Line ... attr: val
+                this.map[":root"].push(this.#resolveValue(line))
+            } // Key: Value
             else if (line.includes(":")) {
-                let split = line.split(": ")
-                let key = split[0]
-                let val = split[1]
-                if (val.includes("_")) {
-                    val = val.replaceAll()
-                }
-                this.map[mapID()].push(this.resolveValue(line))
+                this.map[mapID()].push(this.#resolveValue(line))
             }
-            // Comments ... //
         }
-        
     }
 
     print() { console.log(this.css.join("\n")) }

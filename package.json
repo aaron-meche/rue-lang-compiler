@@ -23,6 +23,7 @@
 	"type": "module",
 	"main": "src/index.js",
 	"scripts": {
-		"test": "compile"
+		"test": "compile",
+		"dev": "node --watch --watch-path=./dev.rue --watch-path=./dev.js --watch-path=./src/compiler.js dev.js"
 	}
 }

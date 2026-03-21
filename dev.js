@@ -8,10 +8,16 @@
 import { RueFile } from "./src/compiler.js"
 
 function main() {
-    let file = new RueFile('./dev.rue')
+    console.time("prog")
+    // create instance
+    let file = new RueFile('./dev.rue', true)
+    console.timeLog("prog")
+    // parse + compile
+    file.run()
+    console.timeLog("prog")
+    // output
     file.output('./style.css')
+    console.timeEnd("prog")
 }
 
-setInterval(() => {
-    main()
-}, 2000)
+main()
