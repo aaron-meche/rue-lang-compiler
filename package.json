@@ -1,6 +1,6 @@
 {
 	"name": "rue-lang",
-	"version": "1.0.40",
+	"version": "1.0.50",
 	"description": "Rue Stylesheet Language, css with nested styles and advanced variables",
 	"keywords": [
 		"rue",
