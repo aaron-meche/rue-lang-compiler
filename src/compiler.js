@@ -7,6 +7,7 @@
 import fs, { read } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseArgs } from 'util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __sysDir = path.dirname(__filename);
@@ -47,9 +48,9 @@ export class RueFile {
         this.feed(readFileText(filepath), doNotCompile)
     }
 
-    // Force feed text instead of filepath
-    feed(text, doNotCompile) {
-        this.txt = text
+    // Force feed strinb instead of filepath
+    feed(string, doNotCompile) {
+        this.txt = string
 
         if (doNotCompile) return
         this.run()
@@ -85,12 +86,72 @@ export class RueFile {
         return String(result)
     }
 
-    // Resolve variable / function calls
-    #resolveValue(val) {
-        if (val.split(" ")[0] == "def") {
-            val = val?.replace("def ", "--")
+    #handleFunctionCalls(str, returnExtractedCall) {
+        let openParen = str.indexOf("(")
+        let funcName = ""
+        let paramStr = ""
+        let indexOfCallFirstChar = null
+        let indexOfCallLastChar = null
+        // Capture function name
+        for (let i = openParen; i > 0; --i) {
+            let prevChar = str[i - 1]
+            if (prevChar != " ") {
+                funcName = prevChar + funcName
+            } 
+            else {
+                indexOfCallFirstChar = i
+                break
+            }
         }
-        return val
+        // Capture function parameters
+        for (let i = openParen; i < str.length; ++i) {
+            let nextChar = str[i + 1]
+            if (nextChar != ")") {
+                paramStr += nextChar
+            } 
+            else {
+                indexOfCallLastChar = i
+                break
+            }
+        }
+        let func = this.func?.[funcName]
+        let funcStr = funcName + "(" + paramStr + ")"
+        if (func) {
+            str = str.replace(funcStr, func(paramStr))
+            console.log(func(paramStr))
+        }
+
+        if (returnExtractedCall) {
+            if (paramStr.includes(",")) {
+                paramStr = paramStr.split(",")
+            }
+            else {
+                paramStr = [paramStr]
+            }
+            return {
+                name: funcName,
+                params: paramStr
+            }
+        }
+        
+        return str
+    }
+
+    // Handle func and var functionality
+    #resolveString(line) {
+        let charSplit = line.split("")
+        let wordSplit = line.split(" ")
+        
+        // Variable Definition
+        if (wordSplit[0] == "def") {
+            line = line?.replace("def ", "--")
+        }
+
+        // Function Call
+        if (charSplit.includes("(") && charSplit.includes(")")) {
+            line = this.#handleFunctionCalls(line)
+        }
+        return line
     }
 
     // Interpret each line, building map
@@ -122,7 +183,6 @@ export class RueFile {
                         this.func[name] = new Function(...params, body)
                     }
                     catch (error) {
-                        this.css.push("/* Error creating function: " + name + " */")
                         throw new Error(error)
                     }
                     this.inFunc = false
@@ -141,9 +201,10 @@ export class RueFile {
         else {
             if (firstWord == "//") return
             if (firstWord == "func") {
+                let funcSignature = this.#handleFunctionCalls(line, true)
                 this.inFunc = true
-                this.funcName = line.replace("func ", "").split("(")[0]
-                this.funcParams = [line.split("(")[1].split(")")[0]]
+                this.funcName = funcSignature.name
+                this.funcParams = funcSignature.params
             } // New Layer
             else if (lastChar == "{") {
                 this.layers.push(line.replace("{", ""))
@@ -153,10 +214,10 @@ export class RueFile {
                 this.layers.pop()
             } // Variable Definition
             else if (firstWord == "def") {
-                this.map[":root"].push(this.#resolveValue(line))
+                this.map[":root"].push(this.#resolveString(line))
             } // Key: Value
             else if (line.includes(":")) {
-                this.map[mapID()].push(this.#resolveValue(line))
+                this.map[mapID()].push(this.#resolveString(line))
             }
         }
     }

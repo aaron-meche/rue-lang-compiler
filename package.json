@@ -24,6 +24,6 @@
 	"main": "src/index.js",
 	"scripts": {
 		"test": "compile",
-		"dev": "node --watch --watch-path=./dev.rue --watch-path=./dev.js --watch-path=./src/compiler.js dev.js"
+		"dev": "node --watch --watch-path=./test.js --watch-path=./src/compiler.js test.js"
 	}
 }

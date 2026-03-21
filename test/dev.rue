@@ -8,16 +8,19 @@
 func getLayer(layer) {
     let base = 20
     let diff = 8
-    let r = 20 + layer * diff
-    let g = 20 + layer * diff
-    let b = 20 + layer * diff
+    return `rgb(${20 + layer * diff}, ${20 + layer * diff}, ${20 + layer * diff})`
+}
+
+func getColor(r, g, b) {
     return `rgb(${r}, ${g}, ${b})`
 }
 
 // def l0: { getLayer(0) }
 def l0: rgb(20, 20, 20);
-def l1: getLayer(1)
-def l2: getLayer(2)
+def l1: getLayer(1);
+def l2: getLayer(2);
+def l3: getLayer(3);
+def red: getColor(255, 0, 0);
 
 .module{
     padding: 1.6rem;
